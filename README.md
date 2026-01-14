@@ -4,6 +4,9 @@
 物理演算とキーフレーム補間を組み合わせた、インタラクティブなアニメーションツールです。
 
 
+<img width="1919" height="1029" alt="image" src="https://github.com/user-attachments/assets/5d9e1062-11ea-4929-848c-6040cd93f353" />
+
+
 ## 🎯 プロジェクト概要 (Overview)
 
 このプロジェクトは、以下の機能を提供します：
