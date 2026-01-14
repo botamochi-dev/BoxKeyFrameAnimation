@@ -1,0 +1,36 @@
+# コンパイル済みクラスファイル
+*.class
+bin/
+out/
+target/
+build/
+
+# パッケージファイル
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# ログファイル
+*.log
+
+# IDEファイル
+.vscode/
+.idea/
+*.iml
+.settings/
+.classpath
+.project
+
+# OS固有のファイル
+.DS_Store
+Thumbs.db
+
+# 一時ファイル
+*.tmp
+*.bak
+*.swp
+*~
