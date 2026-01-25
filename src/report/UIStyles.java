@@ -3,11 +3,9 @@ package report;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
-import java.io.InputStream;
 
 /**
- * 色・フォント・ボーダーなど、UI全体の見た目を統一するヘルパークラス。
- * Swingはデフォルトだと味気ないため、ここでスタイル指定をまとめておく。
+ * 色・フォントなど、UI全体の見た目を統一するヘルパークラス。
  */
 public class UIStyles {
     public static final Color PRIMARY_COLOR = new Color(41, 128, 185);
@@ -30,46 +28,11 @@ public class UIStyles {
     public static final Color KEYFRAME_COLOR = new Color(241, 196, 15);
     public static final Color KEYFRAME_SELECTED = new Color(231, 76, 60);
 
-    // カスタムフォントをリソースから読み込む
-    public static final Font FONT_REGULAR = loadFont("/resources/NotoSansJP-Regular.ttf", 12f);
-    public static final Font FONT_BOLD = loadFont("/resources/NotoSansJP-Bold.ttf", 12f);
-    public static final Font FONT_TITLE = loadFont("/resources/NotoSansJP-Bold.ttf", 16f);
+    // フォント
+    public static final Font FONT_REGULAR = new Font("Dialog", Font.PLAIN, 12);
+    public static final Font FONT_BOLD = new Font("Dialog", Font.BOLD, 12);
+    public static final Font FONT_TITLE = new Font("Dialog", Font.BOLD, 16);
     public static final Font FONT_MONO = new Font("Monospaced", Font.PLAIN, 12);
-
-    /**
-     * フォントファイルをクラスパスから読み込む。
-     * resourcesフォルダに配置されたTrueTypeフォント(.ttf)を読み込み、
-     * 指定されたサイズで利用可能なFontオブジェクトとして返す。
-     * 
-     * @param path クラスパス上のフォントファイルのパス（例: "/resources/font.ttf"）
-     * @param size フォントサイズ（ポイント単位）
-     * @return 読み込んだFont。失敗時はDialog(Sans Serif)をフォールバックとして返す
-     */
-    private static Font loadFont(String path, float size) {
-        try {
-            // クラスパスからフォントファイルを読み込む
-            InputStream is = UIStyles.class.getResourceAsStream(path);
-            if (is == null) {
-                System.err.println("フォントファイルが見つかりません: " + path);
-                return new Font("Dialog", Font.PLAIN, (int) size);
-            }
-
-            // TrueTypeフォントとして登録し、指定サイズで派生させる
-            Font font = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(size);
-
-            // システムのGraphicsEnvironmentに登録（これで他のコンポーネントでも利用可能に）
-            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            ge.registerFont(font);
-
-            is.close();
-            return font;
-        } catch (Exception e) {
-            System.err.println("フォントの読み込みに失敗しました: " + path);
-            e.printStackTrace();
-            // フォールバック: デフォルトのDialogフォントを返す
-            return new Font("Dialog", Font.PLAIN, (int) size);
-        }
-    }
 
     private UIStyles() {
     }
