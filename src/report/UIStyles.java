@@ -28,7 +28,6 @@ public class UIStyles {
     public static final Color KEYFRAME_COLOR = new Color(241, 196, 15);
     public static final Color KEYFRAME_SELECTED = new Color(231, 76, 60);
 
-    // フォント
     public static final Font FONT_REGULAR = new Font("Dialog", Font.PLAIN, 12);
     public static final Font FONT_BOLD = new Font("Dialog", Font.BOLD, 12);
     public static final Font FONT_TITLE = new Font("Dialog", Font.BOLD, 16);
