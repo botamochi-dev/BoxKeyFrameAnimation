@@ -3,11 +3,9 @@ package report;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 
 /**
  * タイムライン画面とパラメータスライダーをまとめて管理するクラス。
- * UIコンポーネントの生成、ボタンのハンドリング、Boxへの値反映などを1か所に集約している。
  */
 public class KeyFrameTimeline {
     private int currentFrame = 0;
@@ -57,7 +55,7 @@ public class KeyFrameTimeline {
         timelineViewPanel = new JPanel(new BorderLayout());
         UIStyles.stylePanel(timelineViewPanel, "タイムライン");
 
-        timelineViewPanel.add(createControlPanel(), BorderLayout.NORTH); // 再生・登録ボタン周り
+        timelineViewPanel.add(createControlPanel(), BorderLayout.NORTH);
         timelinePanel = new TimelinePanel(keyFrameData);
         timelinePanel.addPropertyChangeListener("currentFrame", evt -> {
             int frame = timelinePanel.getCurrentFrame();
@@ -66,25 +64,17 @@ public class KeyFrameTimeline {
         JScrollPane timelineScroll = new JScrollPane(timelinePanel);
         timelinePanel.setParentScrollPane(timelineScroll);
 
-        // JScrollPaneのキー操作を無効化して、TimelinePanelにイベントを渡す
         timelineScroll.setInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
 
         timelineViewPanel.add(timelineScroll, BorderLayout.CENTER);
 
-        // 矢印キーでフレームを移動できるようにキーバインディングを設定
         setupKeyBindings();
     }
 
-    /**
-     * 左右の矢印キーでフレームを移動できるようにキーバインディングを設定する。
-     * TimelinePanel自体にフォーカスがある状態で動作する。
-     */
     private void setupKeyBindings() {
-        // TimelinePanel自身にキーバインディングを設定（WHEN_FOCUSEDを使用）
         InputMap inputMap = timelinePanel.getInputMap(JComponent.WHEN_FOCUSED);
         ActionMap actionMap = timelinePanel.getActionMap();
 
-        // 左矢印キー: 前のフレームへ移動
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "previousFrame");
         actionMap.put("previousFrame", new AbstractAction() {
             @Override
@@ -95,7 +85,6 @@ public class KeyFrameTimeline {
             }
         });
 
-        // 右矢印キー: 次のフレームへ移動
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "nextFrame");
         actionMap.put("nextFrame", new AbstractAction() {
             @Override
@@ -111,7 +100,6 @@ public class KeyFrameTimeline {
         parameterPanel = new JPanel(new BorderLayout());
         UIStyles.stylePanel(parameterPanel, "オブジェクトの設定");
 
-        // 多数のスライダーをスクロールできるようにまとめて配置
         JScrollPane scrollPane = createParameterScrollPane();
         parameterPanel.add(scrollPane, BorderLayout.CENTER);
     }
@@ -121,7 +109,6 @@ public class KeyFrameTimeline {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         UIStyles.stylePanel(panel, "フレーム操作");
 
-        // 現在のフレーム表示
         frameLabel = new JLabel("現在のフレーム: 0");
         frameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         UIStyles.styleTitleLabel(frameLabel);
@@ -152,7 +139,7 @@ public class KeyFrameTimeline {
 
         JPanel buttonPanel = new JPanel(new GridLayout(2, 3, 5, 5));
 
-        JButton registerAllButton = new JButton("全登録"); // 現在のBox状態を一括で記録
+        JButton registerAllButton = new JButton("全登録");
         registerAllButton.addActionListener(e -> {
             if (!animationPanel.isPlaying()) {
                 registerAllKeyFrames();
@@ -160,7 +147,7 @@ public class KeyFrameTimeline {
         });
         UIStyles.styleButton(registerAllButton);
 
-        JButton deleteButton = new JButton("削除"); // タイムライン上で選択したキーフレームを削除
+        JButton deleteButton = new JButton("削除");
         deleteButton.addActionListener(e -> {
             if (!animationPanel.isPlaying()) {
                 deleteSelectedKeyFrame();
@@ -168,7 +155,7 @@ public class KeyFrameTimeline {
         });
         UIStyles.styleButton(deleteButton);
 
-        JButton clearButton = new JButton("全削除"); // すべてのキーフレームを空にする
+        JButton clearButton = new JButton("全削除");
         clearButton.addActionListener(e -> {
             if (!animationPanel.isPlaying()) {
                 clearAllKeyFrames();
@@ -176,7 +163,7 @@ public class KeyFrameTimeline {
         });
         UIStyles.styleButton(clearButton);
 
-        playButton = new JButton("再生"); // タイムラインの手動再生ボタン
+        playButton = new JButton("再生");
         UIStyles.styleButton(playButton);
         playButton.addActionListener(e -> {
             if (animationPanel.isPlaying()) {
@@ -188,22 +175,10 @@ public class KeyFrameTimeline {
             }
         });
 
-        JButton resetButton = new JButton("リセット"); // 初期状態に戻したいときに利用
-        UIStyles.styleButton(resetButton);
-        resetButton.addActionListener(e -> {
-            animationPanel.stop();
-            playButton.setText("再生");
-            box.goHome();
-            setCurrentFrame(0);
-            updateSlidersFromBox();
-            animationPanel.repaint();
-        });
-
         buttonPanel.add(registerAllButton);
         buttonPanel.add(deleteButton);
         buttonPanel.add(clearButton);
         buttonPanel.add(playButton);
-        buttonPanel.add(resetButton);
 
         panel.add(javax.swing.Box.createVerticalStrut(5));
         panel.add(navigationPanel);
@@ -353,7 +328,6 @@ public class KeyFrameTimeline {
 
     private ParameterSlider createPhysicsParameterCompact(String name, int min, int max, int init, double scale,
             java.util.function.Consumer<Double> setter, KeyFrameData.ParamType paramType, JPanel parentPanel) {
-        // キーフレームへ登録できる物理パラメータ用の汎用スライダー
         ParameterSlider slider = new ParameterSlider(name, min, max, init, scale, val -> {
             if (!updatingSliders && !animationPanel.isPlaying()) {
                 setter.accept(val);
@@ -367,6 +341,24 @@ public class KeyFrameTimeline {
             if (!animationPanel.isPlaying()) {
                 double value = 0;
                 switch (paramType) {
+                    case X:
+                        value = box.getX();
+                        break;
+                    case Y:
+                        value = box.getY();
+                        break;
+                    case VX:
+                        value = box.getVx();
+                        break;
+                    case VY:
+                        value = box.getVy();
+                        break;
+                    case ANGLE:
+                        value = box.getAngle();
+                        break;
+                    case ANGULAR_VELOCITY:
+                        value = box.getAngularVelocity();
+                        break;
                     case WIDTH:
                         value = box.getWidth();
                         break;
@@ -402,16 +394,6 @@ public class KeyFrameTimeline {
         return slider;
     }
 
-    private JPanel createParamGroup(String title, Component... components) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        UIStyles.stylePanel(panel, title);
-        for (Component comp : components) {
-            panel.add(comp);
-        }
-        return panel;
-    }
-
     public void setCurrentFrame(int frame) {
         if (frame < 0)
             frame = 0;
@@ -442,7 +424,7 @@ public class KeyFrameTimeline {
         timelinePanel.setCurrentFrame(currentFrame);
 
         if (!animationPanel.isPlaying()) {
-            simulateToFrame(frame); // 再生中以外は、Boxの姿をこのフレームに合わせて確認できるようにする
+            replaySimulationToFrame(frame);
         }
 
         updateSlidersFromBox();
@@ -462,9 +444,8 @@ public class KeyFrameTimeline {
 
     /**
      * Boxを0フレーム目から順番に再生して、ターゲットフレームの状態を再現する。
-     * 途中にもキーフレームがあれば applyToBox で即時反映されるため、線形補間と組み合わせたプレビューができる。
      */
-    private void simulateToFrame(int targetFrame) {
+    private void replaySimulationToFrame(int targetFrame) {
         box.goHome();
         keyFrameData.applyToBox(0, box);
 
@@ -476,7 +457,6 @@ public class KeyFrameTimeline {
         keyFrameData.applyToBox(targetFrame, box);
     }
 
-    // Boxの現在値を各スライダーへ反映。ユーザーが値を直接書き換えても視覚的にズレないようにする
     private void updateSlidersFromBox() {
         updatingSliders = true;
 
@@ -498,7 +478,6 @@ public class KeyFrameTimeline {
         updatingSliders = false;
     }
 
-    // ボタン1つで位置・速度・物理パラメータを全部登録するヘルパー
     private void registerAllKeyFrames() {
         keyFrameData.registerAllFromBox(currentFrame, box);
         timelinePanel.repaint();
@@ -510,25 +489,6 @@ public class KeyFrameTimeline {
     private void registerParameter(KeyFrameData.ParamType type, double value) {
         keyFrameData.registerKeyFrame(type, currentFrame, value);
         timelinePanel.repaint();
-    }
-
-    private double getValueFromBox(KeyFrameData.ParamType type) {
-        switch (type) {
-            case MASS:
-                return box.getMass();
-            case RESTITUTION:
-                return box.getRestitution();
-            case FRICTION:
-                return box.getFriction();
-            case LINEAR_DAMPING:
-                return box.getLinearDamping();
-            case ANGULAR_DAMPING:
-                return box.getAngularDamping();
-            case GRAVITY:
-                return box.getG();
-            default:
-                return 0.0;
-        }
     }
 
     private void deleteSelectedKeyFrame() {
