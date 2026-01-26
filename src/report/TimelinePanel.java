@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * タイムライン（パラメータごとの横並びトラック）を描画するパネル。
+ * タイムラインを描画するパネル。
  * クリック位置からフレーム・トラックを割り出し、KeyFrameDataへの登録や選択を行う。
  */
 public class TimelinePanel extends JPanel {
@@ -27,7 +27,6 @@ public class TimelinePanel extends JPanel {
         setPreferredSize(new Dimension(panelWidth, ROW_HEIGHT * KeyFrameData.ParamType.values().length + 40));
         setBackground(UIStyles.TIMELINE_BG);
 
-        // キーイベントを受け取れるようにする
         setFocusable(true);
 
         addMouseListener(new MouseAdapter() {
@@ -36,7 +35,6 @@ public class TimelinePanel extends JPanel {
                 handleMouseClick(e);
             }
 
-            // マウスクリック時にフォーカスを取得
             @Override
             public void mousePressed(MouseEvent e) {
                 requestFocusInWindow();
@@ -45,27 +43,27 @@ public class TimelinePanel extends JPanel {
     }
 
     private void handleMouseClick(MouseEvent e) {
-        int x = e.getX();
-        int y = e.getY();
+        int mouseX = e.getX();
+        int mouseY = e.getY();
 
-        if (y < 30) {
-            int frame = (x - LABEL_WIDTH + FRAME_WIDTH / 2) / FRAME_WIDTH;
-            if (frame >= 0 && frame <= maxFrame) {
-                currentFrame = frame;
+        if (mouseY < 30) {
+            int clickedFrame = (mouseX - LABEL_WIDTH + FRAME_WIDTH / 2) / FRAME_WIDTH;
+            if (clickedFrame >= 0 && clickedFrame <= maxFrame) {
+                currentFrame = clickedFrame;
                 firePropertyChange("currentFrame", -1, currentFrame);
                 repaint();
             }
             return;
         }
 
-        int row = (y - 30) / ROW_HEIGHT;
-        if (row >= 0 && row < KeyFrameData.ParamType.values().length) {
-            KeyFrameData.ParamType type = KeyFrameData.ParamType.values()[row];
-            int frame = (x - LABEL_WIDTH + FRAME_WIDTH / 2) / FRAME_WIDTH;
+        int rowIndex = (mouseY - 30) / ROW_HEIGHT;
+        if (rowIndex >= 0 && rowIndex < KeyFrameData.ParamType.values().length) {
+            KeyFrameData.ParamType type = KeyFrameData.ParamType.values()[rowIndex];
+            int clickedFrame = (mouseX - LABEL_WIDTH + FRAME_WIDTH / 2) / FRAME_WIDTH;
 
-            if (frame >= 0 && frame <= maxFrame) {
-                if (keyFrameData.hasKeyFrame(type, frame)) {
-                    keyFrameData.selectKeyFrame(type, frame);
+            if (clickedFrame >= 0 && clickedFrame <= maxFrame) {
+                if (keyFrameData.hasKeyFrame(type, clickedFrame)) {
+                    keyFrameData.selectKeyFrame(type, clickedFrame);
                 } else {
                     keyFrameData.clearSelection();
                 }
@@ -94,7 +92,6 @@ public class TimelinePanel extends JPanel {
         g2d.setFont(UIStyles.FONT_REGULAR);
 
         for (int i = 0; i <= maxFrame; i += 5) {
-            // 現在のフレームと重ならない場合のみ表示
             if (i != currentFrame) {
                 int x = LABEL_WIDTH + i * FRAME_WIDTH;
                 g2d.drawString(String.valueOf(i), x - 5, 18);
@@ -177,7 +174,6 @@ public class TimelinePanel extends JPanel {
         int[] yPoints = { 22, 22, 30 };
         g2d.fillPolygon(xPoints, yPoints, 3);
 
-        // 現在のフレーム数を太字のオレンジ色で表示
         String frameText = String.valueOf(currentFrame);
         g2d.setFont(UIStyles.FONT_BOLD);
         g2d.setColor(new Color(255, 165, 0));
