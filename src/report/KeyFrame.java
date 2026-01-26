@@ -1,3 +1,7 @@
+/**
+ * J2300061 窪田渚侑
+ * 課題A
+ */
 package report;
 
 /**
@@ -6,10 +10,8 @@ package report;
  * タイムライン上ではこの KeyFrame の一覧を使って補間を行う。
  */
 public class KeyFrame {
-    // フレーム番号
     private int frameNumber;
 
-    // オブジェクトのパラメータ
     private double x;
     private double y;
     private double vx;
@@ -17,7 +19,6 @@ public class KeyFrame {
     private double angle;
     private double angularVelocity;
 
-    // 物理パラメータ
     private double mass;
     private double restitution;
     private double friction;
@@ -25,9 +26,6 @@ public class KeyFrame {
     private double angularDamping;
     private double gravity;
 
-    /**
-     * コンストラクタ
-     */
     public KeyFrame(int frameNumber, double x, double y, double vx, double vy,
             double angle, double angularVelocity, double mass,
             double restitution, double friction, double linearDamping,
@@ -47,9 +45,6 @@ public class KeyFrame {
         this.gravity = gravity;
     }
 
-    /**
-     * 現在のBoxの状態からキーフレームを作成
-     */
     public static KeyFrame fromBox(int frameNumber, Box box) {
         return new KeyFrame(
                 frameNumber,
@@ -67,9 +62,6 @@ public class KeyFrame {
                 box.getG());
     }
 
-    /**
-     * このキーフレームの状態をBoxに適用
-     */
     public void applyToBox(Box box) {
         box.setXY(x, y);
         box.setVxVy(vx, vy);
@@ -83,9 +75,6 @@ public class KeyFrame {
         box.setG(gravity);
     }
 
-    /**
-     * 2つのキーフレーム間を線形補間
-     */
     public static KeyFrame interpolate(KeyFrame kf1, KeyFrame kf2, int targetFrame) {
         if (targetFrame <= kf1.frameNumber) {
             return kf1;
@@ -112,16 +101,10 @@ public class KeyFrame {
                 lerp(kf1.gravity, kf2.gravity, t));
     }
 
-    /**
-     * 線形補間
-     */
     private static double lerp(double a, double b, double t) {
         return a + (b - a) * t;
     }
 
-    /**
-     * 角度の線形補間（最短経路）
-     */
     private static double lerpAngle(double a, double b, double t) {
         double diff = b - a;
         while (diff > Math.PI)
@@ -131,7 +114,6 @@ public class KeyFrame {
         return a + diff * t;
     }
 
-    // Getters
     public int getFrameNumber() {
         return frameNumber;
     }

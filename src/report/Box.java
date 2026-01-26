@@ -1,3 +1,7 @@
+/**
+ * J2300061 窪田渚侑
+ * 課題A
+ */
 package report;
 
 import java.awt.Color;
@@ -8,9 +12,7 @@ import java.awt.geom.AffineTransform;
 import javax.swing.JPanel;
 
 /**
- * 長方形の剛体を模したクラス。位置・速度だけでなく角度や角速度も持ち、
- * 画面四辺との衝突では傾いた形のまま反射する。初心者が「状態を全部プロパティで管理する」
- * 感覚をつかめるよう、値ごとにgetter/setterを用意している。
+ * 長方形の剛体を模したクラス。位置・速度、角度や角速度も持つ。
  */
 public class Box {
     private double width = 40.0;
@@ -44,10 +46,6 @@ public class Box {
     private double timeScale = 1.0;
     private static final double BASE_INTERVAL = 33.0;
 
-    /**
-     * 一時的にBoxの状態を保存するための小さなDTO。
-     * 「シミュレーション → 判定 → 元に戻す」といったリハーサルに利用する。
-     */
     public static class BoxState {
         public double x, y, vx, vy, angle, angularVelocity;
         public double width, height;
@@ -182,7 +180,6 @@ public class Box {
         this.color = color;
     }
 
-    // 物理パラメータのgetter/setter
     public double getMass() {
         return mass;
     }
@@ -262,16 +259,13 @@ public class Box {
 
         g2d.setColor(color);
 
-        // 回転と平行移動を適用
         AffineTransform transform = new AffineTransform();
         transform.translate(x, y);
         transform.rotate(angle);
         g2d.setTransform(transform);
 
-        // ボックスを描画（中心が原点）
         g2d.fillRect((int) (-width / 2), (int) (-height / 2), (int) width, (int) height);
 
-        // 境界線を描画
         g2d.setColor(Color.BLACK);
         g2d.drawRect((int) (-width / 2), (int) (-height / 2), (int) width, (int) height);
 
@@ -279,7 +273,6 @@ public class Box {
         g2d.setColor(prevColor);
     }
 
-    // ボックスを左下隅へ移動
     public void goHome() {
         x = width / 2.0 + 10;
         y = panel.getHeight() - height / 2.0 - 10;
@@ -310,38 +303,20 @@ public class Box {
         this.g = state.g;
     }
 
-    // 座標、速度、角度更新
-    /**
-     * 1フレームぶん Box を前進させるメインの物理計算。
-     * 1. 位置・角度を速度に応じて更新
-     * 2. 減衰をかけて徐々に減速
-     * 3. 画面の壁と衝突していないかをSAT(分離軸定理)風にチェック
-     * 4. 床で止まった場合は重力を止める
-     */
     public void next() {
         int panelWidth = panel.getWidth();
         int panelHeight = panel.getHeight();
 
-        // 位置更新（時間スケールを適用）
         x = x + vx * timeScale;
         y = y + vy * timeScale;
-
-        // 角度更新（時間スケールを適用）
         angle = angle + angularVelocity * timeScale;
 
-        // 移動速度に減衰を適用
         vx *= linearDamping;
         vy *= linearDamping;
-
-        // 角速度に減衰を適用
         angularVelocity *= angularDamping;
 
-        // OBBの頂点を取得（傾いた長方形でも判定できるようにする）
         double[][] vertices = getVertices();
 
-        /*--- 壁との衝突判定（SAT） ---*/
-
-        // 左壁との衝突
         boolean hitLeft = false;
         for (int i = 0; i < 4; i++) {
             if (vertices[i][0] < 0) {
@@ -350,49 +325,38 @@ public class Box {
             }
         }
         if (hitLeft) {
-            // 最も左にある頂点（衝突点）を探す
             double minX = Double.MAX_VALUE;
-            double contactY = y;
             int contactIndex = 0;
             for (int i = 0; i < 4; i++) {
                 if (vertices[i][0] < minX) {
                     minX = vertices[i][0];
-                    contactY = vertices[i][1];
                     contactIndex = i;
                 }
             }
 
-            // 重心から衝突点へのベクトル r
             double rx = vertices[contactIndex][0] - x;
             double ry = vertices[contactIndex][1] - y;
 
-            // 衝突点での水平方向の速度
-            double vp_x = vx - angularVelocity * ry;
-            double vp_y = vy + angularVelocity * rx;
+            double contactVelocityX = vx + angularVelocity * ry;
+            double contactVelocityY = vy - angularVelocity * rx;
 
-            // 衝突点が壁に向かっている場合のみ処理（左壁: vp_x < 0）
-            if (vp_x < 0) {
-                // インパルス計算（左壁: 法線ベクトル (1, 0)）
-                double impulseN = -(1.0 + restitution) * vp_x;
-                double K_normal = (1.0 / mass) + (ry * ry / getInertia());
-                double j_normal = impulseN / K_normal;
+            if (contactVelocityX < 0) {
+                double normalImpulse = -(1.0 + restitution) * contactVelocityX;
+                double normalK = (1.0 / mass) + (ry * ry / getInertia());
+                double normalJ = normalImpulse / normalK;
 
-                // 摩擢によるインパルス（接線方向）
-                double impulseTangent = -vp_y * friction;
-                double K_tangent = (1.0 / mass) + (rx * rx / getInertia());
-                double j_tangent = impulseTangent / K_tangent;
+                double tangentialImpulse = -contactVelocityY * friction;
+                double tangentialK = (1.0 / mass) + (rx * rx / getInertia());
+                double tangentialJ = tangentialImpulse / tangentialK;
 
-                // 速度と角速度を更新
-                vx += j_normal / mass;
-                vy += j_tangent / mass;
-                angularVelocity += (rx * j_tangent - ry * j_normal) / getInertia();
+                vx += normalJ / mass;
+                vy += tangentialJ / mass;
+                angularVelocity -= (rx * tangentialJ - ry * normalJ) / getInertia();
             }
 
-            // めり込み補正
             x = x - minX;
         }
 
-        // 右壁との衝突
         boolean hitRight = false;
         for (int i = 0; i < 4; i++) {
             if (vertices[i][0] > panelWidth) {
@@ -401,49 +365,38 @@ public class Box {
             }
         }
         if (hitRight) {
-            // 最も右にある頂点（衝突点）を探す
             double maxX = -Double.MAX_VALUE;
-            double contactY = y;
             int contactIndex = 0;
             for (int i = 0; i < 4; i++) {
                 if (vertices[i][0] > maxX) {
                     maxX = vertices[i][0];
-                    contactY = vertices[i][1];
                     contactIndex = i;
                 }
             }
 
-            // 重心から衝突点へのベクトル r
             double rx = vertices[contactIndex][0] - x;
             double ry = vertices[contactIndex][1] - y;
 
-            // 衝突点での速度
-            double vp_x = vx - angularVelocity * ry;
-            double vp_y = vy + angularVelocity * rx;
+            double vp_x = vx + angularVelocity * ry;
+            double vp_y = vy - angularVelocity * rx;
 
-            // 衝突点が壁に向かっている場合のみ処理（右壁: vp_x > 0）
             if (vp_x > 0) {
-                // インパルス計算（右壁: 法線ベクトル (-1, 0)）
                 double impulseN = -(1.0 + restitution) * (-vp_x);
                 double K_normal = (1.0 / mass) + (ry * ry / getInertia());
                 double j_normal = impulseN / K_normal;
 
-                // 摩擢によるインパルス
                 double impulseTangent = -vp_y * friction;
                 double K_tangent = (1.0 / mass) + (rx * rx / getInertia());
                 double j_tangent = impulseTangent / K_tangent;
 
-                // 速度と角速度を更新（法線方向が負なので符号に注意）
                 vx -= j_normal / mass;
                 vy += j_tangent / mass;
-                angularVelocity += (rx * j_tangent + ry * j_normal) / getInertia();
+                angularVelocity -= (rx * j_tangent + ry * j_normal) / getInertia();
             }
 
-            // めり込み補正
             x = x - (maxX - panelWidth);
         }
 
-        // 上壁との衝突
         boolean hitTop = false;
         for (int i = 0; i < 4; i++) {
             if (vertices[i][1] < 0) {
@@ -452,49 +405,38 @@ public class Box {
             }
         }
         if (hitTop) {
-            // 最も上にある頂点（衝突点）を探す
             double minY = Double.MAX_VALUE;
-            double contactX = x;
             int contactIndex = 0;
             for (int i = 0; i < 4; i++) {
                 if (vertices[i][1] < minY) {
                     minY = vertices[i][1];
-                    contactX = vertices[i][0];
                     contactIndex = i;
                 }
             }
 
-            // 重心から衝突点へのベクトル r
             double rx = vertices[contactIndex][0] - x;
             double ry = vertices[contactIndex][1] - y;
 
-            // 衝突点での速度
-            double vp_x = vx - angularVelocity * ry;
-            double vp_y = vy + angularVelocity * rx;
+            double vp_x = vx + angularVelocity * ry;
+            double vp_y = vy - angularVelocity * rx;
 
-            // 衝突点が壁に向かっている場合のみ処理（上壁: vp_y < 0）
             if (vp_y < 0) {
-                // インパルス計算（上壁: 法線ベクトル (0, 1)）
                 double impulseN = -(1.0 + restitution) * vp_y;
                 double K_normal = (1.0 / mass) + (rx * rx / getInertia());
                 double j_normal = impulseN / K_normal;
 
-                // 摩擢によるインパルス
                 double impulseTangent = -vp_x * friction;
                 double K_tangent = (1.0 / mass) + (ry * ry / getInertia());
                 double j_tangent = impulseTangent / K_tangent;
 
-                // 速度と角速度を更新
                 vx += j_tangent / mass;
                 vy += j_normal / mass;
-                angularVelocity += (rx * j_normal - ry * j_tangent) / getInertia();
+                angularVelocity -= (rx * j_normal - ry * j_tangent) / getInertia();
             }
 
-            // めり込み補正
             y = y - minY;
         }
 
-        // 下壁との衝突
         boolean hitBottom = false;
         for (int i = 0; i < 4; i++) {
             if (vertices[i][1] > panelHeight) {
@@ -503,57 +445,41 @@ public class Box {
             }
         }
         if (hitBottom) {
-            // 最も下にある頂点（衝突点）を探す
             double maxY = -Double.MAX_VALUE;
-            double contactX = x;
             int contactIndex = 0;
             for (int i = 0; i < 4; i++) {
                 if (vertices[i][1] > maxY) {
                     maxY = vertices[i][1];
-                    contactX = vertices[i][0];
                     contactIndex = i;
                 }
             }
 
-            // 重心から衝突点へのベクトル r
             double rx = vertices[contactIndex][0] - x;
             double ry = vertices[contactIndex][1] - y;
 
-            // 衝突点での速度を計算
-            // v_point = v_center + ω × r
-            // 2Dの場合: vp_x = vx - ω * ry, vp_y = vy + ω * rx
-            double vp_x = vx - angularVelocity * ry;
-            double vp_y = vy + angularVelocity * rx;
+            double vp_x = vx + angularVelocity * ry;
+            double vp_y = vy - angularVelocity * rx;
 
-            // 衝突点が壁に向かっている場合のみ処理（下壁: vp_y > 0）
             if (vp_y > 0) {
-                // インパルスベースの衝突応答（下壁: 法線ベクトル (0, -1)）
                 double impulseN = -(1.0 + restitution) * (-vp_y);
                 double K_normal = (1.0 / mass) + (rx * rx / getInertia());
                 double j_normal = impulseN / K_normal;
 
-                // 摩擢によるインパルス（接線方向）
                 double impulseTangent = -vp_x * friction;
                 double K_tangent = (1.0 / mass) + (ry * ry / getInertia());
                 double j_tangent = impulseTangent / K_tangent;
 
-                // 速度と角速度を更新
                 vx += j_tangent / mass;
-                vy -= j_normal / mass; // 法線方向が負なので符号に注意
-                angularVelocity += (rx * (-j_normal) - ry * j_tangent) / getInertia();
+                vy -= j_normal / mass;
+                angularVelocity -= (rx * (-j_normal) - ry * j_tangent) / getInertia();
             }
 
-            // めり込み補正
             y = y - (maxY - panelHeight);
         }
 
-        // 静止判定：速度が十分小さく、床に接している場合は完全に停止
-        // （エネルギー保存をテストする場合はこの判定をコメントアウト）
+        double velocityThreshold = 0.2;
+        double angularThreshold = 0.01;
 
-        double velocityThreshold = 0.2; // 速度の閾値
-        double angularThreshold = 0.01; // 角速度の閾値
-
-        // 床との接触判定
         boolean onGround = false;
         for (int i = 0; i < 4; i++) {
             if (Math.abs(vertices[i][1] - panelHeight) < 2) {
@@ -562,21 +488,19 @@ public class Box {
             }
         }
 
-        boolean isStopped = false; // 静止状態フラグ
+        boolean isStopped = false;
         if (onGround) {
-            // 速度が閾値以下なら静止
             if (Math.abs(vx) < velocityThreshold && Math.abs(vy) < velocityThreshold) {
                 vx = 0;
                 vy = 0;
-                isStopped = true; // 静止状態
+                isStopped = true;
             }
-            // 角速度が閾値以下なら回転停止
+
             if (Math.abs(angularVelocity) < angularThreshold) {
                 angularVelocity = 0;
             }
         }
 
-        // 画面下向きの加速度（静止していない場合のみ適用）
         if (!isStopped) {
             vy = vy + g * timeScale;
         }

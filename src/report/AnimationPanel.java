@@ -1,3 +1,7 @@
+/**
+ * J2300061 窪田渚侑
+ * 課題A
+ */
 package report;
 
 import javax.swing.*;
@@ -10,10 +14,10 @@ import java.awt.event.ActionListener;
  * SwingのTimerで一定間隔ごとにactionPerformedが呼ばれ、Boxの状態を更新する。
  */
 public class AnimationPanel extends JPanel implements ActionListener {
-    private final Box box; // 画面内で動く物体
-    private final Timer timer; // アニメーション用タイマー（約30fps）
+    private final Box box;
+    private final Timer timer;
     private int frameCount;
-    private KeyFrameTimeline timeline; // タイムラインと連携し、再生位置を同期する
+    private KeyFrameTimeline timeline;
 
     public AnimationPanel() {
         this.timer = new Timer(AnimationConfig.FRAME_INTERVAL_MS, this);
@@ -36,13 +40,13 @@ public class AnimationPanel extends JPanel implements ActionListener {
 
     public void play() {
         if (!timer.isRunning()) {
-            timer.start(); // タイマーが止まっているときだけ起動して二重スタートを防ぐ
+            timer.start();
         }
     }
 
     public void playFromBeginning() {
         stop();
-        box.goHome(); // 物体を初期位置に戻してから再生
+        box.goHome();
         frameCount = 0;
         if (timeline != null) {
             timeline.setCurrentFrame(0);
@@ -122,8 +126,7 @@ public class AnimationPanel extends JPanel implements ActionListener {
         g.drawString(String.format("Angular Velocity: %.2f", box.getAngularVelocity()), x, y);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
+    public void updatePhysicsAndRender() {
         if (frameCount >= AnimationConfig.MAX_FRAME) {
             stop();
             box.goHome();
@@ -137,16 +140,21 @@ public class AnimationPanel extends JPanel implements ActionListener {
         }
 
         if (timeline != null) {
-            timeline.applyKeyFrameData(frameCount); // 現在のフレームに応じたパラメータを適用
+            timeline.applyKeyFrameData(frameCount);
         }
 
-        box.next(); // Box側で物理シミュレーションを1ステップ進める
+        box.next();
         frameCount++;
 
         if (timeline != null) {
-            timeline.setCurrentFrame(frameCount); // タイムライン上の赤線も一緒に進める
+            timeline.setCurrentFrame(frameCount);
         }
 
         repaint();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        updatePhysicsAndRender();
     }
 }
