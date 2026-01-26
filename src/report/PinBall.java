@@ -3,7 +3,7 @@ package report;
 import javax.swing.*;
 
 /**
- * エントリーポイント。Swingアプリを起動し、メインフレームを表示するだけのクラス。
+ * エントリーポイント
  */
 public class PinBall {
     public static void main(String[] args) {
@@ -24,9 +24,6 @@ class ApplicationFrame extends JFrame {
     private final AnimationPanel animationPanel;
     private final KeyFrameTimeline timeline;
 
-    /**
-     * レイアウト構築とBox初期化を担当するアプリ本体。
-     */
     public ApplicationFrame() {
         super("Box KeyFrame Animation");
 
