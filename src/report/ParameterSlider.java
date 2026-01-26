@@ -5,7 +5,6 @@ import java.util.function.Consumer;
 
 /**
  * ラベル、テキストフィールド、スライダーをセットで扱うユーティリティ。
- * scaleを使って「UIは整数、値は小数」のような変換を簡単にする。
  */
 public class ParameterSlider {
     private final JLabel label;
